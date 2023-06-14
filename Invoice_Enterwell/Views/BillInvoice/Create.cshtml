@@ -1,0 +1,123 @@
+﻿@model Invoice.ViewModels.BillInvoiceViewModel
+
+@using (Html.BeginForm("Create", "BillInvoice", FormMethod.Post))
+{
+    <div class="form-group">
+        @Html.LabelFor(model => model.DueDate)
+        <input id="DueDate" name="DueDate" class="form-control" readonly="readonly" />
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.RecipientName)
+        @Html.TextBoxFor(model => model.RecipientName, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.TaxType)
+        @Html.DropDownListFor(model => model.TaxType, new List<SelectListItem>
+        {
+            new SelectListItem { Text = "BiH", Value = "BiH" },
+            new SelectListItem { Text = "HR", Value = "HR" }
+        }, "Odaberite tip takse", new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        <h4>Stavke:</h4>
+        <table id="invoiceItemsTable" class="table">
+            <thead>
+                <tr>
+                    <th>Opis</th>
+                    <th>Količina</th>
+                    <th>Jedinična cijena bez poreza</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.InvoiceItems != null)
+                {
+                    for (int i = 0; i < Model.InvoiceItems.Count; i++)
+                    {
+                        @Html.Partial("_InvoiceItemRow", Model.InvoiceItems[i])
+                    }
+                }
+            </tbody>
+        </table>
+        <button id="addRowButton" type="button" class="btn btn-primary">Dodaj stavku</button>
+    </div>
+
+    <div class="form-group">
+        <h4>Detalji fakture:</h4>
+        <p>Ukupan iznos bez poreza: <span id="totalAmountExcludingTax">@Model.TotalAmountExcludingTax.ToString("N2")</span></p>
+        <p>Ukupan iznos s porezom: <span id="totalAmountIncludingTax">@Model.TotalAmountIncludingTax.ToString("N2")</span></p>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Spremi fakturu</button>
+    <a href="@Url.Action("Index", "BillInvoice")" class="btn btn-secondary">Poništi</a>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#addRowButton').click(function () {
+            $.ajax({
+                url: '/BillInvoice/_InvoiceItemRow',
+                type: 'GET',
+                success: function (partialView) {
+                    $('#invoiceItemsTable tbody').append(partialView);
+                    updateTotalAmounts();
+                }
+            });
+        });
+
+        function updateTotalAmounts() {
+            var totalAmountExcludingTax = 0;
+            var totalAmountIncludingTax = 0;
+
+            $(".item-row").each(function () {
+                var quantity = parseFloat($(this).find(".quantity").val());
+                var unitPriceExcludingTax = parseFloat($(this).find(".unit-price").val());
+                var totalPriceExcludingTax = quantity * unitPriceExcludingTax;
+
+                totalAmountExcludingTax += totalPriceExcludingTax;
+
+                var totalAmountIncludingTaxWithTax = calculateTotalAmountIncludingTax(totalAmountExcludingTax);
+                totalAmountIncludingTax += totalAmountIncludingTaxWithTax;
+            });
+
+            $("#totalAmountExcludingTax").text(totalAmountExcludingTax.toFixed(2));
+            $("#totalAmountIncludingTax").text(totalAmountIncludingTax.toFixed(2));
+        }
+
+        function calculateTotalAmountIncludingTax(totalAmountExcludingTax) {
+            var taxType = $("#TaxType").val();
+
+            var taxRate = 0;
+            if (taxType === "BiH") {
+                taxRate = 0.17;
+            } else if (taxType === "HR") {
+                taxRate = 0.25;
+            }
+
+            var totalAmountIncludingTax = totalAmountExcludingTax * (1 + taxRate);
+            return totalAmountIncludingTax;
+        }
+
+        flatpickr("#DueDate", {
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            defaultDate: new Date()
+        });
+
+        $('#invoiceItemsTable').on('click', '.delete-row-button', function () {
+            $(this).closest('.item-row').remove();
+            updateTotalAmounts();
+        });
+
+        $('#invoiceItemsTable').on('change', '.quantity, .unit-price', function () {
+            updateTotalAmounts();
+        });
+    });
+
+</script>

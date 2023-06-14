@@ -1,0 +1,50 @@
+﻿<div class="container">
+    <h2>Detalji fakture</h2>
+    <table class="table">
+        <tr>
+            <th>Broj fakture</th>
+            <td><input type="text" value="@Model.InvoiceNumber" disabled class="form-control" /></td>
+        </tr>
+        <tr>
+            <th>Datum dospijeća</th>
+            <td><input type="text" value="@Model.DueDate.ToShortDateString()" disabled class="form-control" /></td>
+        </tr>
+        <tr>
+            <th>Kreator</th>
+            <td><input type="text" value="@Model.CreatorUserName" disabled class="form-control" /></td>
+        </tr>
+        <tr>
+            <th>Primatelj</th>
+            <td><input type="text" value="@Model.RecipientName" disabled class="form-control" /></td>
+        </tr>
+    </table>
+
+    @if (Model.InvoiceItems != null && Model.InvoiceItems.Count > 0)
+    {
+        <h3>Stavke:</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Opis</th>
+                    <th>Količina</th>
+                    <th>Jedinična cijena bez poreza</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.InvoiceItems)
+                {
+                    <tr>
+                        <td>@item.Description</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.UnitPriceExcludingTax</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Nema dostupnih stavki za ovu fakturu.</p>
+    }
+    <a href="@Url.Action("Index", "BillInvoice")" class="btn btn-secondary">Povratak</a>
+</div>

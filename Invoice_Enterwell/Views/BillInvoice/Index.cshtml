@@ -1,0 +1,61 @@
+﻿@model List<Invoice.ViewModels.BillInvoiceViewModel>
+
+<div id="invoice-table" class="container">
+    <h2>Fakture</h2>
+    <div class="pt-5 pb-5">
+        <a href="@Url.Action("Create", "BillInvoice")" class="btn btn-success">Dodaj fakturu</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Broj fakture</th>
+                <th>Datum dospijeća</th>
+                <th>Kreator</th>
+                <th>Primatelj</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var invoice in Model)
+            {
+                <tr>
+                    <td>@invoice.InvoiceNumber</td>
+                    <td>@invoice.DueDate.ToShortDateString()</td>
+                    <td>@invoice.CreatorUserName</td>
+                    <td>@invoice.RecipientName</td>
+                    <td>
+                        <a href="@Url.Action("Details", "BillInvoice", new { invoiceNumber = invoice.InvoiceNumber })" class="btn btn-primary btn-sm">Detalji</a>
+                        @if (invoice.CanDelete.HasValue && invoice.CanDelete.Value)
+                        {
+                            <button class="btn btn-danger btn-sm delete-invoice" data-invoice-number="@invoice.InvoiceNumber">Poništi</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $(".delete-invoice").click(function () {
+            var invoiceNumber = $(this).data("invoice-number");
+            var confirmation = confirm("Jeste li sigurni da želite poništiti fakturu?");
+
+            if (confirmation) {
+                // Poziv akcije za poništenje fakture s AJAX-om
+                $.post("/BillInvoice/Delete", { invoiceNumber: invoiceNumber })
+                    .done(function () {
+                        // Uspješno poništenje fakture
+                        // Ažuriraj samo tablicu umjesto ponovnog učitavanja cijele stranice
+                        $("#invoice-table").load(location.href + " #invoice-table");
+                    })
+                    .fail(function () {
+                        // Greška pri poništavanju fakture
+                        alert("Došlo je do pogreške prilikom poništavanja fakture.");
+                    });
+            }
+        });
+    });
+</script>

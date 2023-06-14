@@ -1,0 +1,45 @@
+﻿@model List<Invoice.Models.BillInvoice>
+
+<div class="container">
+    <h2 class="mt-4">Fakture</h2>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @if (Model.Count > 0)
+        {
+            <table class="table table-striped mt-4">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Broj fakture</th>
+                        <th>Datum dospijeća</th>
+                        <th>Kreator</th>
+                        <th>Primatelj</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var invoice in Model)
+                    {
+                        <tr>
+                            <td>@invoice.InvoiceNumber</td>
+                            <td>@invoice.DueDate.ToShortDateString()</td>
+                            <td>@invoice.CreatorUser?.Email</td>
+                            <td>@invoice.RecipientName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="mt-4">Nemate nijednu napravljenu fakturu.</p>
+        }
+    }
+    else
+    {
+        <p class="mt-4">Morate biti prijavljeni kako biste vidjeli i kreirali fakture.</p>
+    }
+
+    <div class="mt-4">
+        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    </div>
+</div>
